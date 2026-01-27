@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Universal Predictor
 
-## Getting Started
+一个基于 Next.js 的预测市场平台，支持从后端API获取数据并展示预测市场卡片。
 
-First, run the development server:
+## 功能特性
+
+- 📊 预测市场卡片展示（支持多选项和Yes/No两种类型）
+- 🏷️ 标签筛选功能
+- 📄 分页支持
+- 🔍 排序功能（按Volume或Liquidity）
+- 📱 响应式设计，支持移动端和桌面端
+- 🌙 深色模式支持
+- 🔗 卡片详情页面
+
+## 技术栈
+
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: TanStack Query (React Query)
+- **HTTP Client**: Axios
+
+## 开始使用
+
+### 1. 安装依赖
+
+```bash
+npm install
+```
+
+### 2. 配置API地址
+
+创建 `.env.local` 文件（如果不存在），并配置后端API地址：
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+```
+
+如果不配置，默认使用 `http://localhost:8000`。
+
+### 3. 配置标签映射
+
+在 `app/page.tsx` 中，有一个 `TAG_NAME_TO_ID_MAP` 对象，用于将前端标签名称映射到后端的tagId。请根据你的后端API实际返回的标签数据来调整这个映射：
+
+```typescript
+const TAG_NAME_TO_ID_MAP: Record<string, string> = {
+  'Politics': 'politics',
+  'Crypto': '21',
+  'Finance': '120',
+  // ... 根据实际API返回的标签ID进行调整
+};
+```
+
+### 4. 启动开发服务器
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API接口
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+应用需要后端提供以下两个接口：
 
-## Learn More
+### 1. 获取卡片列表
 
-To learn more about Next.js, take a look at the following resources:
+**接口**: `GET /card/list`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**参数**:
+- `page`: 页码（默认: 1）
+- `pageSize`: 每页数量（默认: 20）
+- `tagId`: 标签ID（可选）
+- `sortBy`: 排序字段 ("volume" | "liquidity", 可选)
+- `order`: 排序方向 ("asc" | "desc", 可选)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. 获取卡片详情
 
-## Deploy on Vercel
+**接口**: `GET /card/details`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**参数**:
+- `id`: 卡片ID
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+详细的数据结构定义请参考 `types/market.ts` 文件。
+
+## 项目结构
+
+```
+universal_predictor/
+├── app/
+│   ├── page.tsx              # 主页面（列表页）
+│   ├── card/[id]/page.tsx   # 卡片详情页
+│   ├── layout.tsx           # 根布局
+│   └── globals.css          # 全局样式
+├── components/
+│   ├── Navbar.tsx           # 导航栏
+│   ├── FilterTags.tsx       # 过滤标签组件
+│   ├── MarketCard.tsx       # 市场卡片容器
+│   ├── MultipleOptionCard.tsx  # 多选项卡片
+│   ├── YesNoCard.tsx        # Yes/No卡片
+│   └── Providers.tsx        # React Query Provider
+├── lib/
+│   ├── api.ts               # API服务函数
+│   └── queryClient.ts      # React Query配置
+└── types/
+    └── market.ts            # TypeScript类型定义
+```
+
+## 卡片类型
+
+应用支持两种卡片类型：
+
+1. **多选项卡片**: 当卡片包含多个markets时，显示为多选项卡片，只显示概率，不显示Yes/No按钮
+2. **Yes/No卡片**: 当卡片只包含一个market时，显示为Yes/No卡片，显示圆形进度条的chance，并保留Yes/No按钮
+
+## 开发
+
+```bash
+# 开发模式
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 启动生产服务器
+npm start
+
+# 代码检查
+npm run lint
+```
+
+## 注意事项
+
+- 确保后端API服务正在运行
+- 根据实际后端返回的标签数据调整 `TAG_NAME_TO_ID_MAP` 映射
+- 图片URL需要支持跨域访问（或配置Next.js的图片域名白名单）
