@@ -43,7 +43,7 @@ export default function YesNoCard({ card }: YesNoCardProps) {
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-lg transition-shadow w-full sm:w-[315px] flex flex-col">
+    <div className="bg-white rounded-lg border border-gray-200 p-3 w-full sm:w-[315px] flex flex-col transform-gpu transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl">
       {/* A. 头部 (Header) */}
       <div className="flex items-start gap-2 mb-3 flex-shrink-0">
         {/* 图标 - 统一为方形显示 */}
