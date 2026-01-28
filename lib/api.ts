@@ -3,7 +3,7 @@ import { ApiResponse, CardListResponse, CardListParams, Card, CardDetailsParams 
 // 获取API基础URL
 // 优先使用环境变量，如果没有则使用默认地址
 function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8081';
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://aipredictionoracle-production.up.railway.app';
 }
 
 const API_BASE_URL = getApiBaseUrl();
