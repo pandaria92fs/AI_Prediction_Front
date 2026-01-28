@@ -1,65 +1,147 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import FilterTags from '@/components/FilterTags';
 import MarketCard from '@/components/MarketCard';
 import { FilterTag } from '@/types/market';
 import { getCardList } from '@/lib/api';
 
-// 标签名称到可能的tagId映射（根据实际情况调整）
+// 标签名称到tagId映射
 const TAG_NAME_TO_ID_MAP: Record<string, string> = {
-  'Politics': 'politics',
-  'Crypto': '21', // 从示例数据中看到Crypto的id是21
-  'Finance': '120', // 从示例数据中看到Finance的id是120
-  'Geopolitics': 'geopolitics',
-  'Earnings': 'earnings',
-  'Tech': '1401', // 从示例数据中看到Tech的id是1401
-  'Culture': 'culture',
-  'World': 'world',
-  'Economy': 'economy',
-  'Climate & Science': 'climate-science',
-  'Elections': 'elections',
-  'Mentions': 'mentions',
+  'Politics': '2',
+  'Crypto': '21',
+  'Finance': '120',
+  'Geopolitics': '100265',
+  'Earnings': '1013',
+  'Tech': '1401',
+  'Culture': '596',
+  'World': '101970',
+  'Economy': '100328',
+  'Climate & Science': '103037',
+  'Elections': '144',
+  'Mentions': '100343',
+};
+
+// tagId到标签名称的反向映射
+const TAG_ID_TO_NAME_MAP: Record<string, FilterTag> = {
+  '2': 'Politics',
+  '21': 'Crypto',
+  '120': 'Finance',
+  '100265': 'Geopolitics',
+  '1013': 'Earnings',
+  '1401': 'Tech',
+  '596': 'Culture',
+  '101970': 'World',
+  '100328': 'Economy',
+  '103037': 'Climate & Science',
+  '144': 'Elections',
+  '100343': 'Mentions',
 };
 
 export default function Home() {
-  const [selectedTag, setSelectedTag] = useState<FilterTag | 'All'>('All');
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tagIdFromUrl = searchParams.get('tagId');
+  
+  // 从URL参数初始化selectedTag
+  const getInitialTag = useCallback((): FilterTag | 'All' => {
+    if (tagIdFromUrl && TAG_ID_TO_NAME_MAP[tagIdFromUrl]) {
+      return TAG_ID_TO_NAME_MAP[tagIdFromUrl];
+    }
+    return 'All';
+  }, [tagIdFromUrl]);
+
+  const [selectedTag, setSelectedTag] = useState<FilterTag | 'All'>(getInitialTag);
   const pageSize = 20;
   const [sortBy, setSortBy] = useState<'volume' | 'liquidity'>('volume');
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // 获取tagId
-  const tagId = selectedTag !== 'All' ? TAG_NAME_TO_ID_MAP[selectedTag] : undefined;
+  // 当URL参数变化时，更新selectedTag
+  useEffect(() => {
+    const newTag = getInitialTag();
+    setSelectedTag(newTag);
+  }, [tagIdFromUrl, getInitialTag]);
 
-  // 使用React Query获取数据
-  const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ['cards', page, pageSize, tagId, sortBy, order],
-    queryFn: () => getCardList({ page, pageSize, tagId, sortBy, order }),
+  // 直接从URL获取tagId，确保与URL保持一致
+  const tagId = tagIdFromUrl || undefined;
+
+  // 使用无限查询实现懒加载
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    isFetching,
+  } = useInfiniteQuery({
+    queryKey: ['cards', pageSize, tagId, sortBy, order],
+    queryFn: ({ pageParam = 1 }) =>
+      getCardList({ page: pageParam, pageSize, tagId, sortBy, order }),
+    getNextPageParam: (lastPage) => {
+      const total = lastPage.data.total;
+      const currentPage = lastPage.data.page;
+      const totalPages = Math.ceil(total / pageSize);
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
-  const cards = data?.data?.list || [];
-  const total = data?.data?.total || 0;
-  const totalPages = Math.ceil(total / pageSize);
+  // 合并所有页面的数据
+  const cards = data?.pages.flatMap((page) => page.data.list) || [];
+
+  // 懒加载：当滚动到底部时加载更多
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // 切换标签时更新URL和状态
+  const handleTagSelect = useCallback((tag: FilterTag | 'All') => {
+    setSelectedTag(tag);
+    // 更新URL参数
+    if (tag !== 'All') {
+      const tagId = TAG_NAME_TO_ID_MAP[tag];
+      router.push(`/?tagId=${tagId}`);
+    } else {
+      router.push('/');
+    }
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <FilterTags selectedTag={selectedTag} onTagSelect={(tag) => {
-        setSelectedTag(tag);
-        setPage(1); // 切换标签时重置到第一页
-      }} />
+      <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
 
-      {/* 排序控制 */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      {/* 排序控制 - 隐藏但保留代码 */}
+      <div className="hidden max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 bg-white">
         <div className="flex flex-wrap items-center gap-4">
-          <span className="text-sm text-gray-600 dark:text-gray-400">排序:</span>
+          <span className="text-sm text-[#4B5563]">Sort:</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'volume' | 'liquidity')}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-[#1F2937]"
           >
             <option value="volume">Volume</option>
             <option value="liquidity">Liquidity</option>
@@ -67,66 +149,53 @@ export default function Home() {
           <select
             value={order}
             onChange={(e) => setOrder(e.target.value as 'asc' | 'desc')}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-[#1F2937]"
           >
-            <option value="desc">降序</option>
-            <option value="asc">升序</option>
+            <option value="desc">Desc</option>
+            <option value="asc">Asc</option>
           </select>
           {isFetching && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">加载中...</span>
+            <span className="text-sm text-[#6B7280]">Loading...</span>
           )}
         </div>
       </div>
 
-      {/* 市场卡片网格 */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* 市场卡片网格 - 一行4个 */}
+      <main className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 py-6">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="text-gray-500 dark:text-gray-400">加载中...</div>
+            <div className="text-[#6B7280]">Loading...</div>
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <div className="text-red-500 mb-4">加载失败，请检查API连接</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              请确保后端服务正在运行，并检查 NEXT_PUBLIC_API_BASE_URL 环境变量
+            <div className="text-red-500 mb-4">Failed to load. Please check API connection</div>
+            <div className="text-sm text-[#6B7280]">
+              Ensure the backend service is running and check the NEXT_PUBLIC_API_BASE_URL environment variable
             </div>
           </div>
         ) : cards.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              没有找到匹配的市场
+            <p className="text-[#6B7280]">
+              No matching markets found
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[15px]">
               {cards.map((card) => (
                 <MarketCard key={card.id} card={card} />
               ))}
             </div>
 
-            {/* 分页控制 */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-8">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1 || isFetching}
-                  className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  上一页
-                </button>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  第 {page} 页，共 {totalPages} 页（总计 {total} 条）
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages || isFetching}
-                  className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  下一页
-                </button>
-              </div>
-            )}
+            {/* 懒加载触发器 */}
+            <div ref={loadMoreRef} className="h-10 flex items-center justify-center py-8">
+              {isFetchingNextPage && (
+                <div className="text-sm text-[#6B7280]">Load more...</div>
+              )}
+              {!hasNextPage && cards.length > 0 && (
+                <div className="text-sm text-[#6B7280]">No more data</div>
+              )}
+            </div>
           </>
         )}
       </main>

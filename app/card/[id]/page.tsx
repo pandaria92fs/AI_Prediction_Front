@@ -1,11 +1,31 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCardDetails } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Trophy, ArrowUp, ArrowDown, Clock } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import FilterTags from '@/components/FilterTags';
+import { FilterTag } from '@/types/market';
+
+// 标签名称到tagId映射（与首页保持一致）
+const TAG_NAME_TO_ID_MAP: Record<string, string> = {
+  'Politics': '2',
+  'Crypto': '21',
+  'Finance': '120',
+  'Geopolitics': '100265',
+  'Earnings': '1013',
+  'Tech': '1401',
+  'Culture': '596',
+  'World': '101970',
+  'Economy': '100328',
+  'Climate & Science': '103037',
+  'Elections': '144',
+  'Mentions': '100343',
+};
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -13,228 +33,193 @@ interface PageProps {
 
 export default function CardDetailPage({ params }: PageProps) {
   const { id } = use(params);
+  const router = useRouter();
+  const [selectedTag, setSelectedTag] = useState<FilterTag | 'All'>('All');
   const { data, isLoading, error } = useQuery({
     queryKey: ['card', id],
     queryFn: () => getCardDetails({ id }),
   });
 
+  // 切换标签时跳转到首页并应用筛选
+  const handleTagSelect = useCallback((tag: FilterTag | 'All') => {
+    setSelectedTag(tag);
+    // 跳转到首页并应用筛选（与首页行为一致）
+    if (tag !== 'All') {
+      const tagId = TAG_NAME_TO_ID_MAP[tag];
+      router.push(`/?tagId=${tagId}`);
+    } else {
+      router.push('/');
+    }
+  }, [router]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-500 dark:text-gray-400">加载中...</div>
+      <div className="h-screen bg-white flex flex-col">
+        <Navbar />
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">Loading...</div>
+        </div>
       </div>
     );
   }
 
   if (error || !data?.data) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">加载失败</div>
-          <Link
-            href="/"
-            className="text-blue-500 hover:underline"
-          >
-            返回首页
-          </Link>
+      <div className="h-screen bg-white flex flex-col">
+        <Navbar />
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Failed to load</div>
+            <Link
+              href="/"
+              className="text-blue-500 hover:underline"
+            >
+              Back to Home
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   const card = data.data;
-  const isYesNoType = card.markets.length === 1;
+
+  // 格式化数字
+  const formatVolume = (volume: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(volume);
+  };
+
+  // 格式化日期为 "Feb 8, 2026" 格式
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       {/* 导航栏 */}
-      <div className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center gap-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>返回</span>
-            </Link>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">
-              Universal Predictor
+      <Navbar />
+      
+      {/* 类目筛选 - 固定在Navbar下方 */}
+      <div className="sticky top-16 z-30 bg-white">
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+      </div>
+
+      {/* 固定标题区域 */}
+      <div className="sticky top-[129px] z-40 bg-white flex-shrink-0 shadow-sm">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl">
+            {/* 顶部：图标 + title */}
+            <div className="flex items-start gap-4 pt-4 pb-4">
+              {card.icon && (
+                <div className="flex-shrink-0">
+                  <Image
+                    src={card.icon}
+                    alt={card.title}
+                    width={65}
+                    height={65}
+                    className="rounded-lg object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
+              <h1 className="text-xl font-bold text-black flex-1">
+                {card.title}
+              </h1>
+            </div>
+
+            {/* 总体Volume + EndDate */}
+            <div className="pb-4">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-gray-600" />
+                <span className="font-bold text-black">
+                  {formatVolume(card.volume)} Vol.
+                </span>
+                <span className="text-gray-300 mx-2">|</span>
+                <Clock className="w-4 h-4 text-[#9CA3AF]" />
+                <span className="text-[#9CA3AF] font-normal">
+                  {formatDate(card.endDate)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 详情内容 */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
-        {/* 卡片头部 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div className="flex items-start gap-6">
-            {card.icon && (
-              <div className="flex-shrink-0">
-                <Image
-                  src={card.icon}
-                  alt={card.title}
-                  width={120}
-                  height={120}
-                  className="rounded-lg object-cover"
-                  unoptimized
-                />
-              </div>
-            )}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                {card.title}
-              </h1>
-              
-              {/* 标签 */}
-              {card.tags && card.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {card.tags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="px-3 py-1 text-sm font-medium text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-full"
-                    >
-                      {tag.label}
-                    </span>
-                  ))}
-                </div>
-              )}
+      {/* 可滚动的市场选项列表 - 可以滚动并藏到标题下方 */}
+      <main className="flex-1 overflow-y-auto relative">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl">
+            <div className="space-y-0">
+              {card.markets.map((market, index) => {
+                const probability = market.probability * 100;
+                const probabilityText = probability < 1 ? '<1%' : `${Math.round(probability)}%`;
+                const isLowProbability = probability < 1;
+                const percentageChange = market.percentageChange || 0; // 如果后端没有，默认为0
+                const isPositive = percentageChange > 0;
 
-              {/* 统计信息 */}
-              <div className="flex gap-6 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                  <span className="font-medium">Volume:</span>{' '}
-                  ${(card.volume / 1000).toFixed(1)}K
-                </div>
-                <div>
-                  <span className="font-medium">Liquidity:</span>{' '}
-                  ${(card.liquidity / 1000).toFixed(1)}K
-                </div>
-                <div>
-                  <span className="font-medium">Markets:</span> {card.markets.length}
-                </div>
-              </div>
+                return (
+                  <div
+                    key={market.id}
+                    className={`flex items-start justify-between py-4 ${
+                      index < card.markets.length - 1 ? 'border-b border-gray-200' : ''
+                    }`}
+                  >
+                    {/* 左侧：标题 + Volume */}
+                    <div className="flex-1 pr-4">
+                      <div className="font-bold text-black mb-1">
+                        {market.groupItemTitle || market.question}
+                      </div>
+                      <div className="text-sm text-black">
+                        {formatVolume(market.volume)} Vol.
+                      </div>
+                    </div>
+
+                    {/* 右侧：百分比 + 变化 */}
+                    <div className="flex items-center gap-3">
+                      {/* 当前百分比 */}
+                      <div
+                        className={`${
+                          isLowProbability
+                            ? 'text-gray-400 text-base font-normal'
+                            : 'text-black text-xl font-bold'
+                        }`}
+                      >
+                        {probabilityText}
+                      </div>
+
+                      {/* 百分比变化 - 如果后端有数据就显示 */}
+                      {market.percentageChange !== undefined && market.percentageChange !== 0 && (
+                        <div
+                          className={`text-sm flex items-center gap-0.5 ${
+                            isPositive ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {isPositive ? (
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          )}
+                          <span>{Math.abs(percentageChange)}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-
-        {/* 市场列表 */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            市场选项
-          </h2>
-          
-          {card.markets.map((market) => {
-            const probability = market.probability * 100;
-            const circumference = 2 * Math.PI * 45;
-            const offset = circumference - (probability / 100) * circumference;
-
-            return (
-              <div
-                key={market.id}
-                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
-              >
-                <div className="flex items-start gap-6">
-                  {market.icon && (
-                    <div className="flex-shrink-0">
-                      <Image
-                        src={market.icon}
-                        alt={market.question}
-                        width={80}
-                        height={80}
-                        className="rounded-lg object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      {market.question}
-                    </h3>
-
-                    {/* 概率显示 */}
-                    <div className="flex items-center gap-6">
-                      <div className="relative w-24 h-24">
-                        <svg className="transform -rotate-90 w-24 h-24">
-                          <circle
-                            cx="48"
-                            cy="48"
-                            r="36"
-                            stroke="currentColor"
-                            strokeWidth="6"
-                            fill="none"
-                            className="text-gray-200 dark:text-gray-700"
-                          />
-                          <circle
-                            cx="48"
-                            cy="48"
-                            r="36"
-                            stroke="currentColor"
-                            strokeWidth="6"
-                            fill="none"
-                            strokeDasharray={circumference * 0.72}
-                            strokeDashoffset={offset * 0.72}
-                            strokeLinecap="round"
-                            className="text-gray-900 dark:text-white transition-all duration-300"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-xl font-bold text-gray-900 dark:text-white">
-                              {probability.toFixed(1)}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">Volume:</span>{' '}
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              ${(market.volume / 1000).toFixed(1)}K
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">Liquidity:</span>{' '}
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              ${(market.liquidity / 1000).toFixed(1)}K
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">开始:</span>{' '}
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {new Date(market.startDate).toLocaleDateString('zh-CN')}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">结束:</span>{' '}
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {new Date(market.endDate).toLocaleDateString('zh-CN')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Yes/No 按钮（如果是Yes/No类型） */}
-                    {isYesNoType && (
-                      <div className="flex gap-3 mt-6">
-                        <button className="flex-1 py-3 px-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-colors">
-                          Yes
-                        </button>
-                        <button className="flex-1 py-3 px-4 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors">
-                          No
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </main>
     </div>

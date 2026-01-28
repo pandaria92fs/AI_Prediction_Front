@@ -12,66 +12,64 @@ export default function YesNoCard({ card }: YesNoCardProps) {
   const market = card.markets[0];
   const chance = market ? market.probability * 100 : 0;
 
-  // 计算圆形进度条的样式
-  const circumference = 2 * Math.PI * 45; // 半径45
+  // 计算圆形进度条的样式 - 缩小尺寸
+  const radius = 28; // 缩小半径
+  const circumference = 2 * Math.PI * radius;
   const offset = circumference - (chance / 100) * circumference;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
-      {/* 图标和标题 */}
-      <div className="flex items-start gap-4 mb-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow w-full sm:w-[315px] h-[180px] flex flex-col">
+      {/* 图标、标题和Chance - 一行显示 */}
+      <div className="flex items-start gap-3 mb-3 flex-shrink-0">
         {card.icon && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-10 h-10">
             <Image
               src={card.icon}
               alt={card.title}
-              width={64}
-              height={64}
-              className="rounded-lg object-cover"
+              width={40}
+              height={40}
+              className="object-contain w-full h-full"
               unoptimized
             />
           </div>
         )}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex-1">
-          {market?.question || card.title}
+        <h3 className="text-base font-semibold text-[#1F2937] flex-1 leading-tight line-clamp-2 overflow-hidden text-ellipsis">
+          {market?.groupItemTitle || market?.question || card.title}
         </h3>
-      </div>
-
-      {/* Chance 显示 - 圆形进度条 */}
-      <div className="flex items-center justify-center my-6">
-        <div className="relative w-32 h-32">
-          <svg className="transform -rotate-90 w-32 h-32">
+        {/* Chance 显示在右上角 */}
+        <div className="flex-shrink-0 relative w-16 h-16">
+          <svg className="transform -rotate-90 w-16 h-16">
             {/* 背景圆 */}
             <circle
-              cx="64"
-              cy="64"
-              r="45"
+              cx="32"
+              cy="32"
+              r={radius}
               stroke="currentColor"
-              strokeWidth="8"
+              strokeWidth="4"
               fill="none"
-              className="text-gray-200 dark:text-gray-700"
+              className="text-gray-200"
             />
             {/* 进度圆 */}
             <circle
-              cx="64"
-              cy="64"
-              r="45"
+              cx="32"
+              cy="32"
+              r={radius}
               stroke="currentColor"
-              strokeWidth="8"
+              strokeWidth="4"
               fill="none"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               strokeLinecap="round"
-              className="text-gray-900 dark:text-white transition-all duration-300"
+              className="text-gray-400 transition-all duration-300"
             />
           </svg>
           {/* 中心文字 */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="text-lg font-bold text-[#1F2937] leading-none">
                 {chance.toFixed(0)}%
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <div className="text-[10px] text-[#6B7280] font-normal mt-0.5 leading-none">
                 chance
               </div>
             </div>
@@ -79,41 +77,25 @@ export default function YesNoCard({ card }: YesNoCardProps) {
         </div>
       </div>
 
-      {/* Yes/No 按钮 */}
-      <div className="flex gap-3 mt-4">
+      {/* Yes/No 按钮 - 缩小尺寸，点击进入详情 */}
+      <div className="flex gap-2 mb-3 flex-1 min-h-0 items-start">
         <button
-          onClick={(e) => e.stopPropagation()}
-          className="flex-1 py-3 px-4 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-colors"
+          className="flex-1 py-2 px-3 bg-[#D1FAE5] text-[#065F46] rounded-lg text-sm font-normal transition-colors"
         >
           Yes
         </button>
         <button
-          onClick={(e) => e.stopPropagation()}
-          className="flex-1 py-3 px-4 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors"
+          className="flex-1 py-2 px-3 bg-[#FEE2E2] text-[#991B1B] rounded-lg text-sm font-normal transition-colors"
         >
           No
         </button>
       </div>
 
       {/* 标签和统计信息 */}
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-        {/* 标签 */}
-        {card.tags && card.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
-            {card.tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded"
-              >
-                {tag.label}
-              </span>
-            ))}
-          </div>
-        )}
+      <div className="pt-3 border-t border-gray-100 flex-shrink-0">
         {/* 统计信息 */}
-        <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-          <span>Volume: ${(card.volume / 1000).toFixed(1)}K</span>
-          <span>Liquidity: ${(card.liquidity / 1000).toFixed(1)}K</span>
+        <div className="flex gap-3 text-xs text-[#6B7280] font-normal">
+          <span>${(card.volume / 1000000).toFixed(1)}m Vol.</span>
         </div>
       </div>
     </div>

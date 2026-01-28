@@ -13,39 +13,41 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow w-full sm:w-[315px] h-[180px] flex flex-col">
       {/* 图标和标题 */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-start gap-3 mb-3 flex-shrink-0">
         {card.icon && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-10 h-10">
             <Image
               src={card.icon}
               alt={card.title}
-              width={64}
-              height={64}
-              className="rounded-lg object-cover"
+              width={40}
+              height={40}
+              className="object-contain w-full h-full"
               unoptimized
             />
           </div>
         )}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex-1">
+        <h3 className="text-sm font-semibold text-[#1F2937] flex-1 leading-tight line-clamp-2 overflow-hidden text-ellipsis">
           {card.title}
         </h3>
       </div>
 
-      {/* 市场选项列表 - 只显示概率，不显示Yes/No按钮 */}
-      <div className="space-y-3">
-        {card.markets.map((market) => {
+      {/* 市场选项列表 - 只显示前两个，其他隐藏 */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {card.markets.slice(0, 2).map((market, index) => {
           const probability = (market.probability * 100).toFixed(1);
           return (
             <div
               key={market.id}
-              className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+              className={`flex items-center justify-between py-1.5 ${
+                index < card.markets.slice(0, 2).length - 1 ? 'border-b border-gray-100' : ''
+              }`}
             >
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
-                {market.question}
+              <span className="text-sm font-medium text-[#1F2937] flex-1">
+                {market.groupItemTitle || market.question}
               </span>
-              <span className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+              <span className="text-sm font-bold text-[#1F2937] ml-3">
                 {probability}%
               </span>
             </div>
@@ -54,24 +56,10 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
       </div>
 
       {/* 标签和统计信息 */}
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-        {/* 标签 */}
-        {card.tags && card.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
-            {card.tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded"
-              >
-                {tag.label}
-              </span>
-            ))}
-          </div>
-        )}
+      <div className="pt-3 border-t border-gray-100 flex-shrink-0">
         {/* 统计信息 */}
-        <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400">
-          <span>Volume: ${(card.volume / 1000).toFixed(1)}K</span>
-          <span>Liquidity: ${(card.liquidity / 1000).toFixed(1)}K</span>
+        <div className="flex gap-3 text-xs text-[#6B7280] font-normal">
+          <span>${(card.volume / 1000000).toFixed(1)}m Vol.</span>
         </div>
       </div>
     </div>
