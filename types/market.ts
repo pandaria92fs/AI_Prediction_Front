@@ -38,6 +38,7 @@ export interface Card {
   updatedAt: string;
   tags: Tag[];
   markets: Market[];
+  aILogicSummary?: string; // AI 逻辑摘要（可选）
 }
 
 // API响应类型
