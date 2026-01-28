@@ -194,11 +194,11 @@ export default function CardDetailPage({ params }: PageProps) {
                 const isPositive = percentageChange > 0;
 
                 const formattedTitle = formatGroupItemTitle(market.groupItemTitle || market.question);
-                // 根据箭头类型设置颜色：上升箭头红色，下降箭头绿色
+                // 根据箭头类型设置颜色：上升箭头绿色，下降箭头红色
                 const arrowColorClass = formattedTitle.arrowType === 'up' 
-                  ? 'text-red-600' 
-                  : formattedTitle.arrowType === 'down' 
                   ? 'text-green-600' 
+                  : formattedTitle.arrowType === 'down' 
+                  ? 'text-red-600' 
                   : '';
 
                 return (
@@ -219,9 +219,7 @@ export default function CardDetailPage({ params }: PageProps) {
                           {market.aILogicSummary}
                         </div>
                       )}
-                      <div className="text-sm text-black">
-                        {formatVolume(market.volume)} Vol.
-                      </div>
+                      {/* Volume 已隐藏 */}
                     </div>
 
                     {/* 右侧：百分比 + 变化 */}

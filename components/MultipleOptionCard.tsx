@@ -99,7 +99,7 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
         {/* 表头 */}
         <div className="grid grid-cols-[1fr_50px_50px] gap-2 text-xs text-[#6B7280] font-medium pb-0.5 mb-0.5">
           <div className="text-xs text-[#6B7280] font-normal">
-            ${(card.volume / 1000000).toFixed(1)}m Vol.
+            {/* Volume 已隐藏 */}
           </div>
           <div className="text-center">Mkt</div>
           <div className="text-center">AI</div>
@@ -113,11 +113,11 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
           const isUp = bias > 0;
 
           const formattedTitle = formatGroupItemTitle(market.groupItemTitle || market.question);
-          // 根据箭头类型设置颜色：上升箭头红色，下降箭头绿色
+          // 根据箭头类型设置颜色：上升箭头绿色，下降箭头红色
           const arrowColorClass = formattedTitle.arrowType === 'up' 
-            ? 'text-red-600' 
-            : formattedTitle.arrowType === 'down' 
             ? 'text-green-600' 
+            : formattedTitle.arrowType === 'down' 
+            ? 'text-red-600' 
             : '';
 
           return (

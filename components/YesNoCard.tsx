@@ -84,7 +84,7 @@ export default function YesNoCard({ card }: YesNoCardProps) {
         {/* 表头 */}
         <div className="grid grid-cols-[1fr_50px_50px] gap-2 text-xs text-[#6B7280] font-medium pb-0.5 mb-0.5">
           <div className="text-xs text-[#6B7280] font-normal">
-            ${(card.volume / 1000000).toFixed(1)}m Vol.
+            {/* Volume 已隐藏 */}
           </div>
           <div className="text-center">Mkt</div>
           <div className="text-center">AI</div>
