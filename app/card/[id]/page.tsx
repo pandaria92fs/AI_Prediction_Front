@@ -106,6 +106,30 @@ export default function CardDetailPage({ params }: PageProps) {
     });
   };
 
+  // 格式化 groupItemTitle：如果开头是箭头，在箭头和后续内容之间添加空格
+  // 返回格式化后的文本和箭头类型（用于颜色判断）
+  const formatGroupItemTitle = (title: string): { text: string; arrowType: 'up' | 'down' | 'right' | 'left' | null } => {
+    // 箭头映射：保留窄箭头
+    const arrowMap: Record<string, { arrow: string; type: 'up' | 'down' | 'right' | 'left' }> = {
+      '↑': { arrow: '↑', type: 'up' },      // 向上箭头
+      '↓': { arrow: '↓', type: 'down' },    // 向下箭头
+      '→': { arrow: '→', type: 'right' },   // 向右箭头
+      '←': { arrow: '←', type: 'left' },    // 向左箭头
+    };
+
+    const firstChar = title[0];
+    
+    if (arrowMap[firstChar]) {
+      // 替换为粗箭头并在箭头和后续内容之间添加空格
+      return {
+        text: `${arrowMap[firstChar].arrow} ${title.slice(1)}`,
+        arrowType: arrowMap[firstChar].type
+      };
+    }
+    
+    return { text: title, arrowType: null };
+  };
+
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
       {/* 导航栏 */}
@@ -169,6 +193,14 @@ export default function CardDetailPage({ params }: PageProps) {
                 const percentageChange = market.percentageChange || 0; // 如果后端没有，默认为0
                 const isPositive = percentageChange > 0;
 
+                const formattedTitle = formatGroupItemTitle(market.groupItemTitle || market.question);
+                // 根据箭头类型设置颜色：上升箭头红色，下降箭头绿色
+                const arrowColorClass = formattedTitle.arrowType === 'up' 
+                  ? 'text-red-600' 
+                  : formattedTitle.arrowType === 'down' 
+                  ? 'text-green-600' 
+                  : '';
+
                 return (
                   <div
                     key={market.id}
@@ -178,8 +210,8 @@ export default function CardDetailPage({ params }: PageProps) {
                   >
                     {/* 左侧：标题 + Volume */}
                     <div className="flex-1 pr-4">
-                      <div className="font-bold text-black mb-1">
-                        {market.groupItemTitle || market.question}
+                      <div className={`font-bold mb-1 ${arrowColorClass || 'text-black'}`}>
+                        {formattedTitle.text}
                       </div>
                       <div className="text-sm text-black">
                         {formatVolume(market.volume)} Vol.

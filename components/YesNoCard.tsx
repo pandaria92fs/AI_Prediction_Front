@@ -106,7 +106,7 @@ export default function YesNoCard({ card }: YesNoCardProps) {
               </div>
               {/* Polymarket % */}
               <div className="text-sm font-bold text-[#1F2937] text-center">
-                {row.marketProb.toFixed(1)}%
+                {Math.round(row.marketProb)}%
               </div>
               {/* AI Predicted % */}
               <div
@@ -118,7 +118,7 @@ export default function YesNoCard({ card }: YesNoCardProps) {
                     : 'text-[#1F2937]'
                 }`}
               >
-                {row.aiProb.toFixed(1)}%
+                {Math.round(row.aiProb)}%
               </div>
             </div>
           );

@@ -19,6 +19,30 @@ function getMaxBias(markets: Market[]): number {
   return Math.max(...markets.map(calculateBias));
 }
 
+// 格式化 groupItemTitle：如果开头是箭头，在箭头和后续内容之间添加空格
+// 返回格式化后的文本和箭头类型（用于颜色判断）
+function formatGroupItemTitle(title: string): { text: string; arrowType: 'up' | 'down' | 'right' | 'left' | null } {
+  // 箭头映射：保留窄箭头
+  const arrowMap: Record<string, { arrow: string; type: 'up' | 'down' | 'right' | 'left' }> = {
+    '↑': { arrow: '↑', type: 'up' },      // 向上箭头
+    '↓': { arrow: '↓', type: 'down' },    // 向下箭头
+    '→': { arrow: '→', type: 'right' },   // 向右箭头
+    '←': { arrow: '←', type: 'left' },    // 向左箭头
+  };
+
+  const firstChar = title[0];
+  
+  if (arrowMap[firstChar]) {
+    // 替换为粗箭头并在箭头和后续内容之间添加空格
+    return {
+      text: `${arrowMap[firstChar].arrow} ${title.slice(1)}`,
+      arrowType: arrowMap[firstChar].type
+    };
+  }
+  
+  return { text: title, arrowType: null };
+}
+
 export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
   if (!card.markets || card.markets.length === 0) {
     return null;
@@ -88,11 +112,13 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
           const isSignificantDiff = Math.abs(bias) > 5; // 显著差异阈值
           const isUp = bias > 0;
 
-          // 获取市场简称（取 groupItemTitle 的前几个单词或首字母）
-          const marketName = market.groupItemTitle || market.question;
-          const shortName = marketName.length > 15 
-            ? marketName.split(' ').map(w => w[0]).join('. ').substring(0, 15) + '.'
-            : marketName;
+          const formattedTitle = formatGroupItemTitle(market.groupItemTitle || market.question);
+          // 根据箭头类型设置颜色：上升箭头红色，下降箭头绿色
+          const arrowColorClass = formattedTitle.arrowType === 'up' 
+            ? 'text-red-600' 
+            : formattedTitle.arrowType === 'down' 
+            ? 'text-green-600' 
+            : '';
 
           return (
             <div
@@ -100,12 +126,12 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
               className="grid grid-cols-[1fr_50px_50px] gap-2 items-center py-0.5"
             >
               {/* Market Name */}
-              <div className="text-sm font-medium text-[#1F2937] truncate">
-                {shortName}
+              <div className={`text-sm font-medium truncate ${arrowColorClass || 'text-[#1F2937]'}`}>
+                {formattedTitle.text}
               </div>
               {/* Polymarket % */}
               <div className="text-sm font-bold text-[#1F2937] text-center">
-                {marketProb.toFixed(1)}%
+                {Math.round(marketProb)}%
               </div>
               {/* AI Predicted % */}
               <div
@@ -117,7 +143,7 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
                     : 'text-[#1F2937]'
                 }`}
               >
-                {aiProb.toFixed(1)}%
+                {Math.round(aiProb)}%
               </div>
             </div>
           );
