@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
@@ -41,7 +41,22 @@ const TAG_ID_TO_NAME_MAP: Record<string, FilterTag> = {
   '100343': 'Mentions',
 };
 
-export default function Home() {
+// 首页加载时的占位内容
+function HomePageFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 py-6">
+        <div className="text-center py-12">
+          <div className="text-[#6B7280]">Loading...</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 使用 useSearchParams 的内容组件，需放在 Suspense 内
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tagIdFromUrl = searchParams.get('tagId');
@@ -200,5 +215,13 @@ export default function Home() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<HomePageFallback />}>
+      <HomeContent />
+    </Suspense>
   );
 }
