@@ -208,11 +208,17 @@ export default function CardDetailPage({ params }: PageProps) {
                       index < card.markets.length - 1 ? 'border-b border-gray-200' : ''
                     }`}
                   >
-                    {/* 左侧：标题 + Volume */}
+                    {/* 左侧：标题 + Volume + AI Logic Summary */}
                     <div className="flex-1 pr-4">
                       <div className={`font-bold mb-1 ${arrowColorClass || 'text-black'}`}>
                         {formattedTitle.text}
                       </div>
+                      {/* AI Logic Summary - 固定两行高度，超出截断 */}
+                      {market.aILogicSummary && (
+                        <div className="min-h-[2.5rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-2 overflow-hidden text-ellipsis mb-1">
+                          {market.aILogicSummary}
+                        </div>
+                      )}
                       <div className="text-sm text-black">
                         {formatVolume(market.volume)} Vol.
                       </div>

@@ -22,6 +22,7 @@ export interface Market {
   adjustedProbability: number; // 0-1之间
   tagIds: string[];
   percentageChange?: number; // 百分比变化（可选，如果后端有的话）
+  aILogicSummary?: string; // AI 逻辑摘要（可选）
 }
 
 // Card类型（卡片）

@@ -151,13 +151,11 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
       </div>
 
       {/* C. 底部 (Footer - AI Logic) - 固定 2 行高度，不足空行补齐，超出第二行末尾 ... */}
-      {card.aILogicSummary && (
-        <div className="flex-shrink-0">
-          <div className="min-h-[2.5rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-2 overflow-hidden text-ellipsis">
-            {card.aILogicSummary}
-          </div>
+      <div className="flex-shrink-0">
+        <div className="min-h-[2.5rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-2 overflow-hidden text-ellipsis">
+          {card.aILogicSummary || ''}
         </div>
-      )}
+      </div>
     </div>
   );
 }
