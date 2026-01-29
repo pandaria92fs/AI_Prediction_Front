@@ -106,17 +106,17 @@ export default function YesNoCard({ card }: YesNoCardProps) {
               className="grid grid-cols-[1fr_50px_50px] gap-2 items-center py-0.5"
             >
               {/* Market Name */}
-              <div className="text-sm font-medium text-[#1F2937]">
+              <div className="text-base font-medium text-[#1F2937]">
                 {row.label}
               </div>
               {/* Polymarket % */}
-              <div className="text-sm font-bold text-[#1F2937] text-center">
+              <div className="text-base font-bold text-[#1F2937] text-center">
                 {roundedMarketProb}%
               </div>
               {/* AI Predicted % - 按钮样式 */}
               <div className="flex justify-center">
                 <button
-                  className={`inline-flex items-center justify-center w-[50px] px-1 py-0.5 text-sm font-bold rounded transition-colors ${
+                  className={`inline-flex items-center justify-center w-[50px] px-1 py-0.5 text-base font-bold rounded transition-colors ${
                     shouldShowColor
                       ? isUp
                         ? 'bg-green-50 text-green-600 hover:bg-green-100'
