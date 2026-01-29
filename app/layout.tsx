@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Universal Predictor",
-  description: "Prediction Market Platform - Predict Future Events",
+  title: "Universal Predictor - AI that outpredicts the prediction market",
+  description: "AI that outpredicts the prediction market - Prediction Market Platform - Predict Future Events",
   icons: {
     icon: '/icon.png',
     apple: '/icon.png',

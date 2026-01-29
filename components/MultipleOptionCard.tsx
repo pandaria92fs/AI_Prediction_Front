@@ -60,15 +60,15 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-3 w-full sm:w-[315px] flex flex-col transform-gpu transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl">
       {/* A. 头部 (Header) */}
-      <div className="flex items-start gap-2 mb-3 flex-shrink-0">
+      <div className="flex items-start gap-2 mb-[3px] flex-shrink-0">
         {/* 图标 - 统一为方形显示 */}
         {card.icon && (
-          <div className="flex-shrink-0 w-[50px] h-[50px] rounded overflow-hidden">
+          <div className="flex-shrink-0 w-[40px] h-[40px] rounded overflow-hidden">
             <Image
               src={card.icon}
               alt={card.title}
-              width={50}
-              height={50}
+              width={40}
+              height={40}
               className="object-cover w-full h-full"
               unoptimized
             />
@@ -79,8 +79,8 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
           <h3 className="text-base font-bold text-[#1F2937] flex-1 leading-tight line-clamp-2">
             {card.title}
           </h3>
-          {/* Status Badge - 右上角 */}
-          {hasHighBias && (
+          {/* Status Badge - 右上角 - 已隐藏但保留计算逻辑 */}
+          {false && hasHighBias && (
             <div
               className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-semibold ${
                 isPositiveBias
@@ -108,8 +108,13 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
         {topMarkets.map((market, index) => {
           const marketProb = market.probability * 100;
           const aiProb = market.adjustedProbability * 100;
-          const bias = aiProb - marketProb;
-          const isSignificantDiff = Math.abs(bias) > 5; // 显著差异阈值
+          // 使用取整后的值计算差异
+          const roundedMarketProb = Math.round(marketProb);
+          const roundedAiProb = Math.round(aiProb);
+          const bias = roundedAiProb - roundedMarketProb;
+          const absBias = Math.abs(bias);
+          // 只有当差异 >= 5 时才显示颜色
+          const shouldShowColor = absBias >= 5;
           const isUp = bias > 0;
 
           const formattedTitle = formatGroupItemTitle(market.groupItemTitle || market.question);
@@ -126,33 +131,35 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
               className="grid grid-cols-[1fr_50px_50px] gap-2 items-center py-0.5"
             >
               {/* Market Name */}
-              <div className={`text-sm font-medium truncate ${arrowColorClass || 'text-[#1F2937]'}`}>
+              <div className={`text-base font-medium truncate ${arrowColorClass || 'text-[#1F2937]'}`}>
                 {formattedTitle.text}
               </div>
               {/* Polymarket % */}
-              <div className="text-sm font-bold text-[#1F2937] text-center">
-                {Math.round(marketProb)}%
+              <div className="text-base font-bold text-[#1F2937] text-center">
+                {roundedMarketProb}%
               </div>
-              {/* AI Predicted % */}
-              <div
-                className={`text-sm font-bold text-center ${
-                  isSignificantDiff
-                    ? isUp
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                    : 'text-[#1F2937]'
-                }`}
-              >
-                {Math.round(aiProb)}%
+              {/* AI Predicted % - 按钮样式 */}
+              <div className="flex justify-center">
+                <button
+                  className={`inline-flex items-center justify-center w-[50px] px-1 py-0.5 text-base font-bold rounded transition-colors ${
+                    shouldShowColor
+                      ? isUp
+                        ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                        : 'bg-red-50 text-red-600 hover:bg-red-100'
+                      : 'bg-gray-50 text-[#1F2937] hover:bg-gray-100'
+                  }`}
+                >
+                  {roundedAiProb}%
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* C. 底部 (Footer - AI Logic) - 固定 2 行高度，不足空行补齐，超出第二行末尾 ... */}
+      {/* C. 底部 (Footer - AI Logic) - 固定 3 行高度，不足空行补齐，超出第三行末尾 ... */}
       <div className="flex-shrink-0">
-        <div className="min-h-[2.5rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-2 overflow-hidden text-ellipsis">
+        <div className="min-h-[3.75rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-3 overflow-hidden text-ellipsis">
           {card.aILogicSummary || ''}
         </div>
       </div>

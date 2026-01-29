@@ -71,7 +71,7 @@ export default function FilterTags({ selectedTag, onTagSelect }: FilterTagsProps
             {/* All 标签 */}
             <button
               onClick={() => onTagSelect('All')}
-              className={`text-sm font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+              className={`text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
                 selectedTag === 'All'
                   ? 'text-[#1F2937]'
                   : 'text-[#9CA3AF] hover:text-[#1F2937]'
@@ -85,7 +85,7 @@ export default function FilterTags({ selectedTag, onTagSelect }: FilterTagsProps
               <button
                 key={tag}
                 onClick={() => onTagSelect(tag)}
-                className={`text-sm font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
                   selectedTag === tag
                     ? 'text-[#1F2937]'
                     : 'text-[#9CA3AF] hover:text-[#1F2937]'

@@ -7,6 +7,13 @@ export interface Tag {
   slug: string;
 }
 
+// 深度分析数据（Red-Team分析）
+export interface DeepReasoning {
+  noise?: string[]; // 情绪趋势要点
+  structuralBarriers?: string[]; // 结构性障碍/具体研究数据
+  blindspotCriticism?: string; // 对当前定价的批评
+}
+
 // Market类型（子市场）
 export interface Market {
   id: string;
@@ -23,6 +30,8 @@ export interface Market {
   tagIds: string[];
   percentageChange?: number; // 百分比变化（可选，如果后端有的话）
   aILogicSummary?: string; // AI 逻辑摘要（可选）
+  structuralAnchor?: string; // 结构性锚点：一句话说明该市场的具体障碍
+  deepReasoning?: DeepReasoning; // 深度分析数据
 }
 
 // Card类型（卡片）

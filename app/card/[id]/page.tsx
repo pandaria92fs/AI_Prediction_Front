@@ -1,14 +1,15 @@
 'use client';
 
-import { use, useState, useCallback } from 'react';
+import { use, useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCardDetails } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Trophy, ArrowUp, ArrowDown, Clock } from 'lucide-react';
+import { Trophy, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import FilterTags from '@/components/FilterTags';
+import MarketDetailCard from '@/components/MarketDetailCard';
 import { FilterTag } from '@/types/market';
 
 // 标签名称到tagId映射（与首页保持一致）
@@ -35,10 +36,91 @@ export default function CardDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [selectedTag, setSelectedTag] = useState<FilterTag | 'All'>('All');
+  const [scrollY, setScrollY] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const aiSummaryRef = useRef<HTMLDivElement>(null);
+  const titleSectionRef = useRef<HTMLDivElement>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ['card', id],
     queryFn: () => getCardDetails({ id }),
   });
+
+  // 分别计算标题区域和 AI Summary 的高度
+  const [titleHeight, setTitleHeight] = useState(0);
+  const [aiSummaryHeight, setAiSummaryHeight] = useState(0);
+
+  // 监听滚动事件和更新高度
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    // 更新高度
+    const updateHeights = () => {
+      // 计算标题区域高度（包括 mb-6）
+      if (titleSectionRef.current) {
+        const computedStyle = window.getComputedStyle(titleSectionRef.current);
+        const marginBottom = parseInt(computedStyle.marginBottom) || 0;
+        setTitleHeight(titleSectionRef.current.offsetHeight + marginBottom);
+      }
+      
+      // 计算 AI Summary 高度（包括 mb-[20px]）
+      if (aiSummaryRef.current) {
+        const computedStyle = window.getComputedStyle(aiSummaryRef.current);
+        const marginBottom = parseInt(computedStyle.marginBottom) || 0;
+        // 只有在未隐藏时才计算高度
+        if (aiSummaryRef.current.offsetHeight > 0) {
+          setAiSummaryHeight(aiSummaryRef.current.offsetHeight + marginBottom);
+        }
+      }
+    };
+
+    // 初始计算，延迟一下确保 DOM 已渲染
+    setTimeout(updateHeights, 0);
+
+    const handleScroll = () => {
+      setScrollY(scrollContainer.scrollTop);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    
+    // 监听窗口大小变化，重新计算高度
+    window.addEventListener('resize', updateHeights);
+    
+    // 使用 MutationObserver 监听 DOM 变化
+    const observer = new MutationObserver(() => {
+      setTimeout(updateHeights, 0);
+    });
+    if (titleSectionRef.current) {
+      observer.observe(titleSectionRef.current, { 
+        childList: true, 
+        subtree: true, 
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+    }
+    if (aiSummaryRef.current) {
+      observer.observe(aiSummaryRef.current, { 
+        childList: true, 
+        subtree: true, 
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+    }
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateHeights);
+      observer.disconnect();
+    };
+  }, [data]);
+
+  const hideThreshold = 50; // 滚动阈值
+  const shouldHideAI = scrollY > hideThreshold;
+  
+  // 计算 Market Analyses 的上移距离（当 AI Summary 隐藏时）
+  // 只上移 AI Summary 的高度（包括 mb-[20px]），这样 Market Analyses 会紧贴在标题区域下方
+  // 标题区域应该保持固定，不被覆盖
+  const marginTop = shouldHideAI ? -aiSummaryHeight : 0;
 
   // 切换标签时跳转到首页并应用筛选
   const handleTagSelect = useCallback((tag: FilterTag | 'All') => {
@@ -106,29 +188,7 @@ export default function CardDetailPage({ params }: PageProps) {
     });
   };
 
-  // 格式化 groupItemTitle：如果开头是箭头，在箭头和后续内容之间添加空格
-  // 返回格式化后的文本和箭头类型（用于颜色判断）
-  const formatGroupItemTitle = (title: string): { text: string; arrowType: 'up' | 'down' | 'right' | 'left' | null } => {
-    // 箭头映射：保留窄箭头
-    const arrowMap: Record<string, { arrow: string; type: 'up' | 'down' | 'right' | 'left' }> = {
-      '↑': { arrow: '↑', type: 'up' },      // 向上箭头
-      '↓': { arrow: '↓', type: 'down' },    // 向下箭头
-      '→': { arrow: '→', type: 'right' },   // 向右箭头
-      '←': { arrow: '←', type: 'left' },    // 向左箭头
-    };
-
-    const firstChar = title[0];
-    
-    if (arrowMap[firstChar]) {
-      // 替换为粗箭头并在箭头和后续内容之间添加空格
-      return {
-        text: `${arrowMap[firstChar].arrow} ${title.slice(1)}`,
-        arrowType: arrowMap[firstChar].type
-      };
-    }
-    
-    return { text: title, arrowType: null };
-  };
+  const isSingleMarket = card.markets.length === 1;
 
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
@@ -136,128 +196,76 @@ export default function CardDetailPage({ params }: PageProps) {
       <Navbar />
       
       {/* 类目筛选 - 固定在Navbar下方 */}
-      <div className="sticky top-16 z-30 bg-white">
+      <div className="flex-shrink-0 sticky top-16 z-30 bg-white">
         <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
       </div>
 
-      {/* 固定标题区域 */}
-      <div className="sticky top-[129px] z-40 bg-white flex-shrink-0 shadow-sm">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl">
-            {/* 顶部：图标 + title */}
-            <div className="flex items-start gap-4 pt-4 pb-4">
-              {card.icon && (
-                <div className="flex-shrink-0">
-                  <Image
-                    src={card.icon}
-                    alt={card.title}
-                    width={65}
-                    height={65}
-                    className="rounded-lg object-cover"
-                    unoptimized
-                  />
+      {/* 主内容区域 - 使用 flex 布局，占据剩余空间 */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col min-h-0">
+          {/* 固定部分：Event Title & Description */}
+          <div className="flex-shrink-0 relative z-10 bg-white">
+            {/* Event Title & Description */}
+            <div ref={titleSectionRef} className="mb-6">
+              <div className="flex items-start gap-4 mb-4">
+                {card.icon && (
+                  <div className="flex-shrink-0">
+                    <Image
+                      src={card.icon}
+                      alt={card.title}
+                      width={65}
+                      height={65}
+                      className="rounded-lg object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">
+                    {card.title}
+                  </h1>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Trophy className="w-4 h-4" />
+                    <span>{formatVolume(card.volume)} Vol.</span>
+                    <span className="text-gray-300 mx-2">|</span>
+                    <Clock className="w-4 h-4" />
+                    <span>{formatDate(card.endDate)}</span>
+                  </div>
                 </div>
-              )}
-              <h1 className="text-xl font-bold text-black flex-1">
-                {card.title}
-              </h1>
+              </div>
             </div>
 
-            {/* 总体Volume + EndDate */}
-            <div className="pb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-gray-600" />
-                <span className="font-bold text-black">
-                  {formatVolume(card.volume)} Vol.
-                </span>
-                <span className="text-gray-300 mx-2">|</span>
-                <Clock className="w-4 h-4 text-[#9CA3AF]" />
-                <span className="text-[#9CA3AF] font-normal">
-                  {formatDate(card.endDate)}
-                </span>
+            {/* AI Event Logic Summary - 独立部分，可以隐藏但不参与滚动 */}
+            {card.aILogicSummary && (
+              <div 
+                ref={aiSummaryRef}
+                className={`mb-[20px] p-6 bg-gray-50 rounded-lg border border-gray-200 transition-all duration-300 ease-in-out ${
+                  shouldHideAI 
+                    ? 'opacity-0 max-h-0 mb-0 p-0 overflow-hidden pointer-events-none' 
+                    : 'opacity-100'
+                }`}
+              >
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                  {card.aILogicSummary}
+                </p>
               </div>
+            )}
+          </div>
+
+          {/* Market Analyses - 独立的滚动容器 */}
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto min-h-0 transition-all duration-300 ease-in-out relative z-0"
+            style={{ marginTop: `${marginTop}px` }}
+          >
+            <div className="space-y-4 sm:space-y-6 pt-0">
+              {card.markets.map((market) => (
+                <MarketDetailCard key={market.id} market={market} isSingleMarket={false} />
+              ))}
             </div>
           </div>
         </div>
       </div>
-
-      {/* 可滚动的市场选项列表 - 可以滚动并藏到标题下方 */}
-      <main className="flex-1 overflow-y-auto relative">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl">
-            <div className="space-y-0">
-              {card.markets.map((market, index) => {
-                const probability = market.probability * 100;
-                const probabilityText = probability < 1 ? '<1%' : `${Math.round(probability)}%`;
-                const isLowProbability = probability < 1;
-                const percentageChange = market.percentageChange || 0; // 如果后端没有，默认为0
-                const isPositive = percentageChange > 0;
-
-                const formattedTitle = formatGroupItemTitle(market.groupItemTitle || market.question);
-                // 根据箭头类型设置颜色：上升箭头绿色，下降箭头红色
-                const arrowColorClass = formattedTitle.arrowType === 'up' 
-                  ? 'text-green-600' 
-                  : formattedTitle.arrowType === 'down' 
-                  ? 'text-red-600' 
-                  : '';
-
-                return (
-                  <div
-                    key={market.id}
-                    className={`flex items-start justify-between py-4 ${
-                      index < card.markets.length - 1 ? 'border-b border-gray-200' : ''
-                    }`}
-                  >
-                    {/* 左侧：标题 + Volume + AI Logic Summary */}
-                    <div className="flex-1 pr-4">
-                      <div className={`font-bold mb-1 ${arrowColorClass || 'text-black'}`}>
-                        {formattedTitle.text}
-                      </div>
-                      {/* AI Logic Summary - 固定两行高度，超出截断 */}
-                      {market.aILogicSummary && (
-                        <div className="min-h-[2.5rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-2 overflow-hidden text-ellipsis mb-1">
-                          {market.aILogicSummary}
-                        </div>
-                      )}
-                      {/* Volume 已隐藏 */}
-                    </div>
-
-                    {/* 右侧：百分比 + 变化 */}
-                    <div className="flex items-center gap-3">
-                      {/* 当前百分比 */}
-                      <div
-                        className={`${
-                          isLowProbability
-                            ? 'text-gray-400 text-base font-normal'
-                            : 'text-black text-xl font-bold'
-                        }`}
-                      >
-                        {probabilityText}
-                      </div>
-
-                      {/* 百分比变化 - 如果后端有数据就显示 */}
-                      {market.percentageChange !== undefined && market.percentageChange !== 0 && (
-                        <div
-                          className={`text-sm flex items-center gap-0.5 ${
-                            isPositive ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {isPositive ? (
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          ) : (
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          )}
-                          <span>{Math.abs(percentageChange)}%</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </main>
     </div>
   );
 }
