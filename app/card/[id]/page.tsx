@@ -40,6 +40,8 @@ export default function CardDetailPage({ params }: PageProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const aiSummaryRef = useRef<HTMLDivElement>(null);
   const titleSectionRef = useRef<HTMLDivElement>(null);
+  /** 冻结的 AI Summary 高度：仅在可见时测量并写入，隐藏后仍用于上移滚动区与过渡 */
+  const frozenAiSummaryHeightRef = useRef(0);
   const { data, isLoading, error } = useQuery({
     queryKey: ['card', id],
     queryFn: () => getCardDetails({ id }),
@@ -63,13 +65,14 @@ export default function CardDetailPage({ params }: PageProps) {
         setTitleHeight(titleSectionRef.current.offsetHeight + marginBottom);
       }
       
-      // 计算 AI Summary 高度（包括 mb-[20px]）
+      // 计算 AI Summary 高度（包括 mb-[20px]），仅在可见时写入，隐藏后保持冻结值用于上移与过渡
       if (aiSummaryRef.current) {
         const computedStyle = window.getComputedStyle(aiSummaryRef.current);
         const marginBottom = parseInt(computedStyle.marginBottom) || 0;
-        // 只有在未隐藏时才计算高度
         if (aiSummaryRef.current.offsetHeight > 0) {
-          setAiSummaryHeight(aiSummaryRef.current.offsetHeight + marginBottom);
+          const h = aiSummaryRef.current.offsetHeight + marginBottom;
+          setAiSummaryHeight(h);
+          frozenAiSummaryHeightRef.current = h;
         }
       }
     };
@@ -118,9 +121,8 @@ export default function CardDetailPage({ params }: PageProps) {
   const shouldHideAI = scrollY > hideThreshold;
   
   // 计算 Market Analyses 的上移距离（当 AI Summary 隐藏时）
-  // 只上移 AI Summary 的高度（包括 mb-[20px]），这样 Market Analyses 会紧贴在标题区域下方
-  // 标题区域应该保持固定，不被覆盖
-  const marginTop = shouldHideAI ? -aiSummaryHeight : 0;
+  // 使用冻结高度，使滚动区顶边与「原 aILogicSummary 顶部」对齐，避免标题与内容间留空
+  const marginTop = shouldHideAI ? -frozenAiSummaryHeightRef.current : 0;
 
   // 切换标签时跳转到首页并应用筛选
   const handleTagSelect = useCallback((tag: FilterTag | 'All') => {
@@ -138,7 +140,7 @@ export default function CardDetailPage({ params }: PageProps) {
     return (
       <div className="h-screen bg-white flex flex-col">
         <Navbar />
-        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-gray-500">Loading...</div>
         </div>
@@ -150,7 +152,7 @@ export default function CardDetailPage({ params }: PageProps) {
     return (
       <div className="h-screen bg-white flex flex-col">
         <Navbar />
-        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="text-red-500 mb-4">Failed to load</div>
@@ -192,17 +194,15 @@ export default function CardDetailPage({ params }: PageProps) {
 
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
-      {/* 导航栏 */}
-      <Navbar />
-      
-      {/* 类目筛选 - 固定在Navbar下方 */}
-      <div className="flex-shrink-0 sticky top-16 z-30 bg-white">
-        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+      {/* 导航栏 + 类目筛选 - 同一 sticky 块，避免缝隙 */}
+      <div className="flex-shrink-0 sticky top-0 z-50 bg-white">
+        <Navbar />
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
       </div>
 
-      {/* 主内容区域 - 使用 flex 布局，占据剩余空间 */}
+      {/* 主内容区域 - 使用 flex 布局，占据剩余空间；pt-0 避免与 sticky 头部之间出现缝隙 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col min-h-0">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 flex-1 flex flex-col min-h-0">
           {/* 固定部分：Event Title & Description */}
           <div className="flex-shrink-0 relative z-10 bg-white">
             {/* Event Title & Description */}
@@ -235,19 +235,22 @@ export default function CardDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* AI Event Logic Summary - 独立部分，可以隐藏但不参与滚动 */}
+            {/* AI Event Logic Summary - 内外层分离：外层做收缩，内层固定 py-6 避免滑动后上下间距错乱 */}
             {card.aILogicSummary && (
-              <div 
+              <div
                 ref={aiSummaryRef}
-                className={`mb-[20px] p-6 bg-gray-50 rounded-lg border border-gray-200 transition-all duration-300 ease-in-out ${
-                  shouldHideAI 
-                    ? 'opacity-0 max-h-0 mb-0 p-0 overflow-hidden pointer-events-none' 
-                    : 'opacity-100'
-                }`}
+                className="overflow-hidden pointer-events-none transition-all duration-300 ease-in-out"
+                style={{
+                  marginBottom: shouldHideAI ? 0 : 20,
+                  opacity: shouldHideAI ? 0 : 1,
+                  maxHeight: shouldHideAI ? 0 : (aiSummaryHeight || 'none'),
+                }}
               >
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                  {card.aILogicSummary}
-                </p>
+                <div className="py-3 px-3 bg-white rounded-lg border border-gray-200">
+                  <p className="text-xs font-semibold text-gray-700 leading-relaxed m-0">
+                    {card.aILogicSummary}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -258,9 +261,9 @@ export default function CardDetailPage({ params }: PageProps) {
             className="flex-1 overflow-y-auto min-h-0 transition-all duration-300 ease-in-out relative z-0"
             style={{ marginTop: `${marginTop}px` }}
           >
-            <div className="space-y-4 sm:space-y-6 pt-0">
+            <div className="pt-0">
               {card.markets.map((market) => (
-                <MarketDetailCard key={market.id} market={market} isSingleMarket={false} />
+                <MarketDetailCard key={market.id} market={market} compactRow />
               ))}
             </div>
           </div>

@@ -146,8 +146,10 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+      <div className="sticky top-0 z-50 bg-white">
+        <Navbar />
+        <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} />
+      </div>
 
       {/* 排序控制 - 隐藏但保留代码 */}
       <div className="hidden max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 bg-white">

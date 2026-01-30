@@ -21,9 +21,11 @@ const AVAILABLE_TAGS: FilterTag[] = [
 interface FilterTagsProps {
   selectedTag: FilterTag | 'All';
   onTagSelect: (tag: FilterTag | 'All') => void;
+  /** 为 false 时不做单独 sticky（如详情页与 Navbar 同块），避免标题与 category 间透缝 */
+  stickyBelowNavbar?: boolean;
 }
 
-export default function FilterTags({ selectedTag, onTagSelect }: FilterTagsProps) {
+export default function FilterTags({ selectedTag, onTagSelect, stickyBelowNavbar = true }: FilterTagsProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showGradient, setShowGradient] = useState(true);
 
@@ -57,21 +59,21 @@ export default function FilterTags({ selectedTag, onTagSelect }: FilterTagsProps
   }, []);
 
   return (
-    <div className="sticky top-16 z-40 w-full border-b border-gray-200 bg-white relative">
+    <div className={`w-full bg-white relative ${stickyBelowNavbar ? 'sticky top-[5.25rem] z-40' : ''}`}>
       <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 py-4">
         {/* 可横向滚动的标签容器 */}
         <div className="relative">
           <div
             ref={scrollContainerRef}
-            className="flex items-center gap-4 overflow-x-auto hide-scrollbar"
+            className="flex items-center gap-6 overflow-x-auto hide-scrollbar"
             style={{
               WebkitOverflowScrolling: 'touch',
             }}
           >
-            {/* All 标签 */}
+            {/* All 标签 - p-0 去掉浏览器默认内边距；gap-6(24px) 与 Polymarket category 栏一致 */}
             <button
               onClick={() => onTagSelect('All')}
-              className={`text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+              className={`p-0 text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
                 selectedTag === 'All'
                   ? 'text-[#1F2937]'
                   : 'text-[#9CA3AF] hover:text-[#1F2937]'
@@ -80,12 +82,15 @@ export default function FilterTags({ selectedTag, onTagSelect }: FilterTagsProps
               All
             </button>
 
+            {/* 分割线 - 参考 Polymarket */}
+            <div className="w-px h-4 bg-gray-300 flex-shrink-0 self-center" aria-hidden />
+
             {/* 其他标签 */}
             {AVAILABLE_TAGS.map((tag) => (
               <button
                 key={tag}
                 onClick={() => onTagSelect(tag)}
-                className={`text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`p-0 text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
                   selectedTag === tag
                     ? 'text-[#1F2937]'
                     : 'text-[#9CA3AF] hover:text-[#1F2937]'
