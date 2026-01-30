@@ -60,7 +60,7 @@ export default function FilterTags({ selectedTag, onTagSelect, stickyBelowNavbar
 
   return (
     <div className={`w-full bg-white relative ${stickyBelowNavbar ? 'sticky top-[5.25rem] z-40' : ''}`}>
-      <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 py-4">
+      <div className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 pt-2 pb-4">
         {/* 可横向滚动的标签容器 */}
         <div className="relative">
           <div

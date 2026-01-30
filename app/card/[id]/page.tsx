@@ -200,9 +200,9 @@ export default function CardDetailPage({ params }: PageProps) {
         <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
       </div>
 
-      {/* 主内容区域 - 使用 flex 布局，占据剩余空间；pt-0 避免与 sticky 头部之间出现缝隙 */}
+      {/* 主内容区域 - 固定宽度区间，避免随标题长短变化；pt-0 避免与 sticky 头部之间出现缝隙 */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 flex-1 flex flex-col min-h-0">
+        <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 flex-1 flex flex-col min-h-0">
           {/* 固定部分：Event Title & Description */}
           <div className="flex-shrink-0 relative z-10 bg-white">
             {/* Event Title & Description */}
@@ -247,7 +247,7 @@ export default function CardDetailPage({ params }: PageProps) {
                 }}
               >
                 <div className="py-3 px-3 bg-white rounded-lg border border-gray-200">
-                  <p className="text-xs font-semibold text-gray-700 leading-relaxed m-0">
+                  <p className="text-sm font-semibold text-gray-700 leading-relaxed m-0">
                     {card.aILogicSummary}
                   </p>
                 </div>
