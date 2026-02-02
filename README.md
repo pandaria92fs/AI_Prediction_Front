@@ -119,9 +119,7 @@ universal_predictor/
 ├── components/
 │   ├── Navbar.tsx           # 导航栏
 │   ├── FilterTags.tsx       # 过滤标签组件
-│   ├── MarketCard.tsx       # 市场卡片容器
-│   ├── MultipleOptionCard.tsx  # 多选项卡片
-│   ├── YesNoCard.tsx        # Yes/No卡片
+│   ├── MarketCard.tsx       # 市场卡片（统一 Yes/No 与多选项展示）
 │   └── Providers.tsx        # React Query Provider
 ├── lib/
 │   ├── api.ts               # API服务函数
@@ -132,10 +130,10 @@ universal_predictor/
 
 ## 卡片类型
 
-应用支持两种卡片类型：
+**MarketCard** 统一处理两种数据形态，逻辑一致、按 Mkt（市场概率）从大到小展示：
 
-1. **多选项卡片**: 当卡片包含多个markets时，显示为多选项卡片，只显示概率，不显示Yes/No按钮
-2. **Yes/No卡片**: 当卡片只包含一个market时，显示为Yes/No卡片，显示圆形进度条的chance，并保留Yes/No按钮
+1. **单 market（Yes/No）**：拆成 Yes/No 两行，按市场概率从大到小排序
+2. **多 markets**：取前两个 market（已按概率降序），用 `groupItemTitle` 作为行标签，支持箭头颜色（↑绿 / ↓红）
 
 ## 开发
 

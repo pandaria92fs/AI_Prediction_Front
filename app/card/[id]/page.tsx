@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useCallback, useRef, useEffect } from 'react';
+import { use, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCardDetails } from '@/lib/api';
 import Image from 'next/image';
@@ -36,112 +36,16 @@ export default function CardDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [selectedTag, setSelectedTag] = useState<FilterTag | 'All'>('All');
-  const [scrollY, setScrollY] = useState(0);
   const [aiSummaryExpanded, setAiSummaryExpanded] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const aiSummaryRef = useRef<HTMLDivElement>(null);
-  const titleSectionRef = useRef<HTMLDivElement>(null);
-  /** 冻结的 AI Summary 高度：仅在可见时测量并写入，隐藏后仍用于上移滚动区与过渡 */
-  const frozenAiSummaryHeightRef = useRef(0);
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ['card', id],
     queryFn: () => getCardDetails({ id }),
   });
 
-  // 分别计算标题区域和 AI Summary 的高度
-  const [titleHeight, setTitleHeight] = useState(0);
-  const [aiSummaryHeight, setAiSummaryHeight] = useState(0);
-
-  // 监听滚动事件和更新高度
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    // 更新高度
-    const updateHeights = () => {
-      // 计算标题区域高度（包括 mb-6）
-      if (titleSectionRef.current) {
-        const computedStyle = window.getComputedStyle(titleSectionRef.current);
-        const marginBottom = parseInt(computedStyle.marginBottom) || 0;
-        setTitleHeight(titleSectionRef.current.offsetHeight + marginBottom);
-      }
-      
-      // 计算 AI Summary 高度（包括 mb-[20px]），仅在可见时写入，隐藏后保持冻结值用于上移与过渡
-      if (aiSummaryRef.current) {
-        const computedStyle = window.getComputedStyle(aiSummaryRef.current);
-        const marginBottom = parseInt(computedStyle.marginBottom) || 0;
-        if (aiSummaryRef.current.offsetHeight > 0) {
-          const h = aiSummaryRef.current.offsetHeight + marginBottom;
-          setAiSummaryHeight(h);
-          frozenAiSummaryHeightRef.current = h;
-        }
-      }
-    };
-
-    // 初始计算，延迟一下确保 DOM 已渲染
-    setTimeout(updateHeights, 0);
-
-    const handleScroll = () => {
-      setScrollY(scrollContainer.scrollTop);
-    };
-
-    scrollContainer.addEventListener('scroll', handleScroll);
-    
-    // 监听窗口大小变化，重新计算高度
-    window.addEventListener('resize', updateHeights);
-    
-    // 使用 MutationObserver 监听 DOM 变化
-    const observer = new MutationObserver(() => {
-      setTimeout(updateHeights, 0);
-    });
-    if (titleSectionRef.current) {
-      observer.observe(titleSectionRef.current, { 
-        childList: true, 
-        subtree: true, 
-        attributes: true,
-        attributeFilter: ['class', 'style']
-      });
-    }
-    if (aiSummaryRef.current) {
-      observer.observe(aiSummaryRef.current, { 
-        childList: true, 
-        subtree: true, 
-        attributes: true,
-        attributeFilter: ['class', 'style']
-      });
-    }
-
-    return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', updateHeights);
-      observer.disconnect();
-    };
-  }, [data]);
-
-  // 展开/收起 aILogicSummary 后重新测量高度，供滚动上移使用
-  useEffect(() => {
-    if (!aiSummaryRef.current || !data?.data?.aILogicSummary) return;
-    const t = setTimeout(() => {
-      const el = aiSummaryRef.current;
-      if (el && el.offsetHeight > 0) {
-        const mb = parseInt(window.getComputedStyle(el).marginBottom) || 0;
-        frozenAiSummaryHeightRef.current = el.offsetHeight + mb;
-        setAiSummaryHeight(el.offsetHeight + mb);
-      }
-    }, 100);
-    return () => clearTimeout(t);
-  }, [data?.data?.aILogicSummary, aiSummaryExpanded]);
-
-  const hideThreshold = 50; // 滚动阈值
-  const shouldHideAI = scrollY > hideThreshold;
-  
-  // Summary 隐藏时仅 collapse（maxHeight 0），不拉负 margin，避免滚动区错位
-  const marginTop = 0;
-
   // 切换标签时跳转到首页并应用筛选
   const handleTagSelect = useCallback((tag: FilterTag | 'All') => {
     setSelectedTag(tag);
-    // 跳转到首页并应用筛选（与首页行为一致）
     if (tag !== 'All') {
       const tagId = TAG_NAME_TO_ID_MAP[tag];
       router.push(`/?tagId=${tagId}`);
@@ -204,62 +108,54 @@ export default function CardDetailPage({ params }: PageProps) {
     });
   };
 
-  const isSingleMarket = card.markets.length === 1;
-
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
-      {/* 导航栏 + 类目筛选 - 同一 sticky 块，避免缝隙 */}
-      <div className="flex-shrink-0 sticky top-0 z-50 bg-white">
+    <div className="h-screen bg-white flex flex-col">
+      {/* 导航栏 + 类目筛选 - 固定在顶部 */}
+      <div className="flex-shrink-0 bg-white">
         <Navbar />
         <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
       </div>
 
-      {/* 主内容区域 - 固定宽度区间，避免随标题长短变化；pt-0 避免与 sticky 头部之间出现缝隙 */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 flex-1 flex flex-col min-h-0">
-          {/* 固定部分：Event Title & Description */}
-          <div className="flex-shrink-0 relative z-10 bg-white">
-            {/* Event Title & Description */}
-            <div ref={titleSectionRef} className="mb-6">
-              <div className="flex items-start gap-4 mb-4">
-                {card.icon && (
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={card.icon}
-                      alt={card.title}
-                      width={65}
-                      height={65}
-                      className="rounded-lg object-cover"
-                      unoptimized
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">
-                    {card.title}
-                  </h1>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Trophy className="w-4 h-4" />
-                    <span>{formatVolume(card.volume)} Vol.</span>
-                    <span className="text-gray-300 mx-2">|</span>
-                    <Clock className="w-4 h-4" />
-                    <span>{formatDate(card.endDate)}</span>
-                  </div>
+      {/* 可滚动容器 */}
+      <div className="flex-1 overflow-y-auto">
+        {/* 标题区域 - sticky 固定 */}
+        <div className="sticky top-0 z-40 bg-white">
+          <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-start gap-4">
+              {card.icon && (
+                <div className="flex-shrink-0">
+                  <Image
+                    src={card.icon}
+                    alt={card.title}
+                    width={65}
+                    height={65}
+                    className="rounded-lg object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">
+                  {card.title}
+                </h1>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Trophy className="w-4 h-4" />
+                  <span>{formatVolume(card.volume)} Vol.</span>
+                  <span className="text-gray-300 mx-2">|</span>
+                  <Clock className="w-4 h-4" />
+                  <span>{formatDate(card.endDate)}</span>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* AI Event Logic Summary - 固定 240px 折叠，more 展开；外层用于滚动隐藏与高度测量 */}
+        {/* 内容区域 - AI Summary + Market 列表 */}
+        <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="space-y-6">
+            {/* AI Event Logic Summary */}
             {card.aILogicSummary && (
-              <div
-                ref={aiSummaryRef}
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${shouldHideAI ? 'pointer-events-none' : ''}`}
-                style={{
-                  marginBottom: shouldHideAI ? 0 : 20,
-                  opacity: shouldHideAI ? 0 : 1,
-                  maxHeight: shouldHideAI ? 0 : undefined,
-                }}
-              >
+              <div className="transition-all duration-300 ease-in-out">
                 <div
                   className={`py-3 px-3 bg-white rounded-lg border border-gray-200 flex flex-col transition-all duration-300 ease-in-out ${!aiSummaryExpanded ? 'max-h-[240px]' : ''}`}
                   style={{ overflow: aiSummaryExpanded ? 'visible' : 'hidden' }}
@@ -279,15 +175,9 @@ export default function CardDetailPage({ params }: PageProps) {
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Market Analyses - 独立的滚动容器 */}
-          <div 
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto min-h-0 transition-all duration-300 ease-in-out relative z-0"
-            style={{ marginTop: `${marginTop}px` }}
-          >
-            <div className="pt-0">
+            {/* Market Analyses 列表 */}
+            <div className="space-y-0">
               {card.markets.map((market) => (
                 <MarketDetailCard key={market.id} market={market} compactRow />
               ))}
