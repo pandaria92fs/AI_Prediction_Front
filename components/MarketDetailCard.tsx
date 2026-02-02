@@ -40,9 +40,9 @@ export default function MarketDetailCard({ market, isSingleMarket = false, compa
           <h3 className="text-base font-bold text-gray-900 truncate" title={displayTitle}>
             {displayTitle}
           </h3>
-<p className="text-xs font-semibold text-gray-500 mt-0.5">
-              {formatVol(market.volume)}
-            </p>
+          <p className="text-xs font-semibold text-gray-500 mt-0.5">
+            {formatVol(market.volume)}
+          </p>
         </div>
         {/* 校准条 */}
         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden relative mt-2">

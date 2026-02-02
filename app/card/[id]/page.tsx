@@ -10,7 +10,42 @@ import { Trophy, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import FilterTags from '@/components/FilterTags';
 import MarketDetailCard from '@/components/MarketDetailCard';
-import { FilterTag } from '@/types/market';
+import { FilterTag, Market } from '@/types/market';
+
+// 判断是否为 Yes/No 类型：仅一条 market 且 groupItemTitle（不区分大小写）为 "yes" 或 "no"
+function isYesNoCard(markets: Market[]): boolean {
+  if (markets.length !== 1) return false;
+  const label = (markets[0].groupItemTitle ?? '').trim().toLowerCase();
+  return label === 'yes' || label === 'no';
+}
+
+// 详情页要展示的 market 列表：Yes/No 类型时补上另一项（1-p），并按概率从高到低排
+function getDetailMarkets(card: { markets: Market[] }): Market[] {
+  const markets = card.markets;
+  if (!isYesNoCard(markets)) return markets;
+  const m = markets[0];
+  const label = (m.groupItemTitle ?? '').trim().toLowerCase();
+  const isYes = label === 'yes';
+  const yesProb = isYes ? m.probability : 1 - m.probability;
+  const yesAdj = isYes ? m.adjustedProbability : 1 - m.adjustedProbability;
+  const noProb = 1 - yesProb;
+  const noAdj = 1 - yesAdj;
+  const yesMarket: Market = {
+    ...m,
+    id: `${m.id}-yes`,
+    groupItemTitle: 'Yes',
+    probability: yesProb,
+    adjustedProbability: yesAdj,
+  };
+  const noMarket: Market = {
+    ...m,
+    id: `${m.id}-no`,
+    groupItemTitle: 'No',
+    probability: noProb,
+    adjustedProbability: noAdj,
+  };
+  return [yesMarket, noMarket].sort((a, b) => b.probability - a.probability);
+}
 
 // 标签名称到tagId映射（与首页保持一致）
 const TAG_NAME_TO_ID_MAP: Record<string, string> = {
@@ -176,9 +211,9 @@ export default function CardDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Market Analyses 列表 */}
+            {/* Market Analyses 列表（Yes/No 类型时已补上另一项） */}
             <div className="space-y-0">
-              {card.markets.map((market) => (
+              {getDetailMarkets(card).map((market) => (
                 <MarketDetailCard key={market.id} market={market} compactRow />
               ))}
             </div>

@@ -36,12 +36,19 @@ function formatGroupItemTitle(title: string): { text: string; arrowType: 'up' | 
   return { text: title, arrowType: null };
 }
 
+// 判断是否为 Yes/No 类型：仅一条 market 且 groupItemTitle（不区分大小写）为 "yes" 或 "no"
+function isYesNoCard(markets: Card['markets']): boolean {
+  if (markets.length !== 1) return false;
+  const label = (markets[0].groupItemTitle ?? '').trim().toLowerCase();
+  return label === 'yes' || label === 'no';
+}
+
 // 根据已按 probability 降序排序的 card.markets 构建统一表格行（Mkt 从大到小）
 function buildTableRows(card: Card): TableRow[] {
   const markets = card.markets;
   if (!markets.length) return [];
 
-  if (markets.length === 1) {
+  if (isYesNoCard(markets)) {
     // Yes/No：拆成两行，再按市场概率从大到小排
     const m = markets[0];
     const yesProb = m.probability * 100;
