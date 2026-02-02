@@ -2,6 +2,7 @@
 
 import { Card, Market } from '@/types/market';
 import Image from 'next/image';
+import { stripLeadingLinkFromAiSummary } from '@/lib/format';
 
 interface MultipleOptionCardProps {
   card: Card;
@@ -160,7 +161,7 @@ export default function MultipleOptionCard({ card }: MultipleOptionCardProps) {
       {/* C. 底部 (Footer - AI Logic) - 固定 3 行高度，不足空行补齐，超出第三行末尾 ... */}
       <div className="flex-shrink-0">
         <div className="min-h-[3.75rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-3 overflow-hidden text-ellipsis">
-          {card.aILogicSummary || ''}
+          {stripLeadingLinkFromAiSummary(card.aILogicSummary)}
         </div>
       </div>
     </div>

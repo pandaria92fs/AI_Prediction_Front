@@ -37,6 +37,7 @@ export default function CardDetailPage({ params }: PageProps) {
   const router = useRouter();
   const [selectedTag, setSelectedTag] = useState<FilterTag | 'All'>('All');
   const [scrollY, setScrollY] = useState(0);
+  const [aiSummaryExpanded, setAiSummaryExpanded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const aiSummaryRef = useRef<HTMLDivElement>(null);
   const titleSectionRef = useRef<HTMLDivElement>(null);
@@ -117,12 +118,25 @@ export default function CardDetailPage({ params }: PageProps) {
     };
   }, [data]);
 
+  // 展开/收起 aILogicSummary 后重新测量高度，供滚动上移使用
+  useEffect(() => {
+    if (!aiSummaryRef.current || !data?.data?.aILogicSummary) return;
+    const t = setTimeout(() => {
+      const el = aiSummaryRef.current;
+      if (el && el.offsetHeight > 0) {
+        const mb = parseInt(window.getComputedStyle(el).marginBottom) || 0;
+        frozenAiSummaryHeightRef.current = el.offsetHeight + mb;
+        setAiSummaryHeight(el.offsetHeight + mb);
+      }
+    }, 100);
+    return () => clearTimeout(t);
+  }, [data?.data?.aILogicSummary, aiSummaryExpanded]);
+
   const hideThreshold = 50; // 滚动阈值
   const shouldHideAI = scrollY > hideThreshold;
   
-  // 计算 Market Analyses 的上移距离（当 AI Summary 隐藏时）
-  // 使用冻结高度，使滚动区顶边与「原 aILogicSummary 顶部」对齐，避免标题与内容间留空
-  const marginTop = shouldHideAI ? -frozenAiSummaryHeightRef.current : 0;
+  // Summary 隐藏时仅 collapse（maxHeight 0），不拉负 margin，避免滚动区错位
+  const marginTop = 0;
 
   // 切换标签时跳转到首页并应用筛选
   const handleTagSelect = useCallback((tag: FilterTag | 'All') => {
@@ -235,21 +249,33 @@ export default function CardDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* AI Event Logic Summary - 内外层分离：外层做收缩，内层固定 py-6 避免滑动后上下间距错乱 */}
+            {/* AI Event Logic Summary - 固定 240px 折叠，more 展开；外层用于滚动隐藏与高度测量 */}
             {card.aILogicSummary && (
               <div
                 ref={aiSummaryRef}
-                className="overflow-hidden pointer-events-none transition-all duration-300 ease-in-out"
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${shouldHideAI ? 'pointer-events-none' : ''}`}
                 style={{
                   marginBottom: shouldHideAI ? 0 : 20,
                   opacity: shouldHideAI ? 0 : 1,
-                  maxHeight: shouldHideAI ? 0 : (aiSummaryHeight || 'none'),
+                  maxHeight: shouldHideAI ? 0 : undefined,
                 }}
               >
-                <div className="py-3 px-3 bg-white rounded-lg border border-gray-200">
-                  <p className="text-sm font-semibold text-gray-700 leading-relaxed m-0">
-                    {card.aILogicSummary}
-                  </p>
+                <div
+                  className={`py-3 px-3 bg-white rounded-lg border border-gray-200 flex flex-col transition-all duration-300 ease-in-out ${!aiSummaryExpanded ? 'max-h-[240px]' : ''}`}
+                  style={{ overflow: aiSummaryExpanded ? 'visible' : 'hidden' }}
+                >
+                  <div className={`flex-1 min-h-0 ${!aiSummaryExpanded ? 'overflow-hidden' : ''}`}>
+                    <p className="text-sm font-semibold text-gray-700 leading-relaxed m-0 whitespace-pre-line">
+                      {card.aILogicSummary?.replace(/\r\n/g, '\n')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAiSummaryExpanded((e) => !e)}
+                    className="mt-2 text-sm font-medium text-blue-600 hover:underline flex-shrink-0 text-left"
+                  >
+                    {aiSummaryExpanded ? 'Less' : 'More'}
+                  </button>
                 </div>
               </div>
             )}
