@@ -37,10 +37,24 @@ export default function MarketDetailCard({ market, isSingleMarket = false, compa
     return (
       <div className="py-3 border-b border-gray-200 last:border-b-0">
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-gray-900 truncate" title={displayTitle}>
-            {displayTitle}
-          </h3>
-          <p className="text-xs font-semibold text-gray-500 mt-0.5">
+          {/* 标题 + 紧接后面的 Odds（同一行，与标题区分） */}
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <h3 className="text-base font-bold text-gray-900 truncate" title={displayTitle}>
+              {displayTitle}
+            </h3>
+            <div className="inline-flex flex-shrink-0 items-center gap-x-2 rounded-md bg-gray-50 px-2.5 py-1 text-sm">
+              <span className="font-medium text-gray-600">Market Odds: {marketProb}%</span>
+              <span className={`font-semibold ${isSame ? 'text-gray-600' : isHigher ? 'text-green-600' : 'text-red-600'}`}>
+                AI Calibrated Odds: {aiProb}%
+              </span>
+              {!isSame && (
+                <span className={`font-medium ${isHigher ? 'text-green-600' : 'text-red-600'}`}>
+                  {isHigher ? '↑ Higher' : '↓ Lower'} ({Math.abs(difference)}%)
+                </span>
+              )}
+            </div>
+          </div>
+          <p className="text-xs font-semibold text-gray-500 mt-1">
             {formatVol(market.volume)}
           </p>
         </div>
@@ -52,18 +66,6 @@ export default function MarketDetailCard({ market, isSingleMarket = false, compa
             style={{ width: `${Math.min(aiProb, 100)}%` }}
           />
         </div>
-        {/* 一行：Market Odds · AI Calibrated Odds · ↑/↓ (x%) */}
-        <p className="text-sm font-semibold text-gray-600 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-          <span>Market Odds: {marketProb}%</span>
-          <span className={isSame ? 'text-gray-600' : isHigher ? 'text-green-600' : 'text-red-600'}>
-            AI Calibrated Odds: {aiProb}%
-          </span>
-          {!isSame && (
-            <span className={isHigher ? 'text-green-600' : 'text-red-600'}>
-              {isHigher ? '↑ Higher' : '↓ Lower'} ({Math.abs(difference)}%)
-            </span>
-          )}
-        </p>
         {insight && (
           <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-snug">{insight}</p>
         )}
