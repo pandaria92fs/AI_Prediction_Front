@@ -3,7 +3,7 @@
 import { Card } from '@/types/market';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { stripLeadingLinkFromAiSummary } from '@/lib/format';
+import { getListPageAiSummary } from '@/lib/format';
 
 interface MarketCardProps {
   card: Card;
@@ -188,7 +188,7 @@ export default function MarketCard({ card }: MarketCardProps) {
       {/* C. 底部：AI Logic */}
       <div className="flex-shrink-0">
         <div className="min-h-[3.75rem] text-xs text-[#6B7280] font-normal leading-relaxed line-clamp-3 overflow-hidden text-ellipsis">
-          {stripLeadingLinkFromAiSummary(aILogicSummary)}
+          {getListPageAiSummary(aILogicSummary)}
         </div>
       </div>
     </div>
