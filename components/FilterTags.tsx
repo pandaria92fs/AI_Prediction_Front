@@ -70,7 +70,7 @@ export default function FilterTags({ selectedTag, onTagSelect, stickyBelowNavbar
               WebkitOverflowScrolling: 'touch',
             }}
           >
-            {/* All 标签 - p-0 去掉浏览器默认内边距；gap-6(24px) 与 Polymarket category 栏一致 */}
+            {/* Trending 标签 - p-0 去掉浏览器默认内边距；gap-6(24px) 与 Polymarket category 栏一致 */}
             <button
               onClick={() => onTagSelect('All')}
               className={`p-0 text-base font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -79,7 +79,7 @@ export default function FilterTags({ selectedTag, onTagSelect, stickyBelowNavbar
                   : 'text-[#9CA3AF] hover:text-[#1F2937]'
               }`}
             >
-              All
+              Trending
             </button>
 
             {/* 分割线 - 参考 Polymarket */}

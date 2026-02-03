@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import FilterTags from '@/components/FilterTags';
+import StatsBanner from '@/components/StatsBanner';
 import MarketCard from '@/components/MarketCard';
 import { FilterTag } from '@/types/market';
 import { getCardList } from '@/lib/api';
@@ -179,6 +180,10 @@ function HomeContent() {
 
       {/* 市场卡片网格 - 一行4个 */}
       <main className="max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-8 py-6">
+        {/* 统计横幅 */}
+        <div className="mb-6">
+          <StatsBanner />
+        </div>
         {isLoading ? (
           <div className="text-center py-12">
             <div className="text-[#6B7280]">Loading...</div>
@@ -198,7 +203,7 @@ function HomeContent() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[15px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[15px] items-start">
               {cards.map((card) => (
                 <MarketCard key={card.id} card={card} />
               ))}
