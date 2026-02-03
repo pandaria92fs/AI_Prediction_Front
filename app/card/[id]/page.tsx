@@ -91,7 +91,7 @@ export default function CardDetailPage({ params }: PageProps) {
 
   if (isLoading) {
     return (
-      <div className="h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
         <div className="flex-1 flex items-center justify-center">
@@ -103,7 +103,7 @@ export default function CardDetailPage({ params }: PageProps) {
 
   if (error || !data?.data) {
     return (
-      <div className="h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
         <div className="flex-1 flex items-center justify-center">
@@ -144,49 +144,48 @@ export default function CardDetailPage({ params }: PageProps) {
   };
 
   return (
-    <div className="h-screen bg-white flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* 导航栏 + 类目筛选 - 固定在顶部 */}
       <div className="flex-shrink-0 bg-white">
         <Navbar />
         <FilterTags selectedTag={selectedTag} onTagSelect={handleTagSelect} stickyBelowNavbar={false} />
       </div>
 
-      {/* 可滚动容器 */}
-      <div className="flex-1 overflow-y-auto">
-        {/* 标题区域 - sticky 固定 */}
-        <div className="sticky top-0 z-40 bg-white">
-          <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-start gap-4">
-              {card.icon && (
-                <div className="flex-shrink-0">
-                  <Image
-                    src={card.icon}
-                    alt={card.title}
-                    width={65}
-                    height={65}
-                    className="rounded-lg object-cover"
-                    unoptimized
-                  />
-                </div>
-              )}
-              <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">
-                  {card.title}
-                </h1>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Trophy className="w-4 h-4" />
-                  <span>{formatVolume(card.volume)} Vol.</span>
-                  <span className="text-gray-300 mx-2">|</span>
-                  <Clock className="w-4 h-4" />
-                  <span>{formatDate(card.endDate)}</span>
-                </div>
+      {/* 标题区域 - 固定不滚动 */}
+      <div className="flex-shrink-0 bg-gray-50">
+        <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-start gap-4">
+            {card.icon && (
+              <div className="flex-shrink-0">
+                <Image
+                  src={card.icon}
+                  alt={card.title}
+                  width={65}
+                  height={65}
+                  className="rounded-lg object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">
+                {card.title}
+              </h1>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Trophy className="w-4 h-4" />
+                <span>{formatVolume(card.volume)} Vol.</span>
+                <span className="text-gray-300 mx-2">|</span>
+                <Clock className="w-4 h-4" />
+                <span>{formatDate(card.endDate)}</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* 内容区域 - AI Summary + Market 列表 */}
-        <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* 仅此区域可滚动：AI Summary + Market 列表 */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="w-full min-w-0 sm:min-w-[600px] lg:min-w-[800px] max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6">
           <div className="space-y-6">
             {/* AI Event Logic Summary */}
             {card.aILogicSummary && (
