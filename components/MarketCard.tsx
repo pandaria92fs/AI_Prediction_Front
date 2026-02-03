@@ -118,7 +118,7 @@ export default function MarketCard({ card }: MarketCardProps) {
           </div>
         )}
         <div className="flex items-center justify-between flex-1 min-w-0 gap-2">
-          <h3 className="text-sm font-bold text-[#1F2937] flex-1 leading-tight line-clamp-2">
+          <h3 className="text-[15px] font-bold text-[#1F2937] flex-1 leading-tight line-clamp-2">
             {card.title}
           </h3>
           {false && hasHighBias && (
@@ -201,7 +201,7 @@ export default function MarketCard({ card }: MarketCardProps) {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
-        <div className={`flex-1 min-w-0 text-[14px] font-normal text-left text-[#7b7b7b] leading-relaxed overflow-hidden text-ellipsis transition-all duration-200 ${isExpanded ? 'line-clamp-3' : 'line-clamp-1'}`}>
+        <div className={`flex-1 min-w-0 text-[12px] font-normal text-left text-[#7b7b7b] leading-relaxed overflow-hidden text-ellipsis transition-all duration-200 ${isExpanded ? 'line-clamp-3' : 'line-clamp-1'}`}>
           {getListPageAiSummary(aILogicSummary)}
         </div>
         {aILogicSummary ? (

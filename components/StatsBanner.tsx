@@ -23,17 +23,17 @@ export default function StatsBanner() {
               Historical Prediction Accuracy
             </h3>
             <p className="text-sm text-[#1F2937] font-normal">
-              94.2% · Trailing 30-Day Avg.
+              65% accuracy
             </p>
           </div>
         </div>
 
-        {/* Avg. Market Divergence */}
+        {/* Proprietary Data Ingestion */}
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center">
             <Image
               src="/2.png"
-              alt="Avg. Market Divergence"
+              alt="Proprietary Data Ingestion"
               width={96}
               height={96}
               className="object-contain w-12 h-12"
@@ -42,20 +42,20 @@ export default function StatsBanner() {
           </div>
           <div className="flex flex-col">
             <h3 className="text-base font-bold text-[#0D7A6A]">
-              Avg. Market Divergence
+              Proprietary Data Ingestion
             </h3>
             <p className="text-sm text-[#1F2937] font-normal">
-              +12% · Median Identified Edge
+              2.5B+ · Daily Unstructured Signals Analyzed
             </p>
           </div>
         </div>
 
-        {/* Active Markets */}
+        {/* Model Re-calibration Rate */}
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center">
             <Image
               src="/3.png"
-              alt="Active Markets"
+              alt="Model Re-calibration Rate"
               width={96}
               height={96}
               className="object-contain w-12 h-12"
@@ -64,10 +64,10 @@ export default function StatsBanner() {
           </div>
           <div className="flex flex-col">
             <h3 className="text-base font-bold text-[#0D7A6A]">
-              Active Markets
+              Model Re-calibration Rate
             </h3>
             <p className="text-sm text-[#1F2937] font-normal">
-              Tracked in Real-Time
+              Real-time · Sub-second Processing Latency
             </p>
           </div>
         </div>
