@@ -142,8 +142,9 @@ export default function MarketCard({ card }: MarketCardProps) {
           <div className="text-center px-2">Mkt</div>
           <div className="text-center px-2">AI</div>
         </div>
-        {/* 市场数据区域：固定高度约 2 行，内容可上下滚动查看全部 */}
-        <div className="w-[288px] max-h-[88px] overflow-y-auto overflow-x-hidden flex-shrink-0 hide-scrollbar">
+        {/* 市场数据区域：固定高度约 2 行，内容可上下滚动；外层圆角裁剪保证底角始终圆角（与行内圆角一致） */}
+        <div className="w-[288px] max-h-[88px] rounded-b overflow-hidden flex-shrink-0">
+          <div className="w-[288px] max-h-[88px] overflow-y-auto overflow-x-hidden hide-scrollbar">
           {rows.map((row, index) => {
           const roundedMarketProb = Math.round(row.marketProb);
           const roundedAiProb = Math.round(row.aiProb);
@@ -192,6 +193,7 @@ export default function MarketCard({ card }: MarketCardProps) {
             </div>
           );
         })}
+          </div>
         </div>
       </div>
 
