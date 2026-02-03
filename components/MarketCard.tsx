@@ -101,7 +101,7 @@ export default function MarketCard({ card }: MarketCardProps) {
   return (
     <div
       onClick={handleClick}
-      className="cursor-pointer bg-white rounded-xl border border-gray-200 px-3 pt-[14px] pb-3 w-full sm:w-[315px] min-h-[225px] flex flex-col transform-gpu transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl"
+      className="cursor-pointer bg-white rounded-xl border border-gray-200 shadow-[0_2px_9px_rgba(0,0,0,0.08)] px-3 pt-[14px] pb-3 w-full sm:w-[315px] min-h-[225px] flex flex-col transform-gpu transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_2px_9px_rgba(0,0,0,0.12)]"
     >
       {/* A. 头部 */}
       <div className="flex items-center gap-2 mb-2 flex-shrink-0">

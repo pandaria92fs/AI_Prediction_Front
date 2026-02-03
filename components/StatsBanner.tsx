@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function StatsBanner() {
   return (
-    <div className="bg-[#F9FAFB] rounded-xl border border-gray-200 px-[60px] py-4 w-[calc(100%-8px)]">
+    <div className="bg-[#F9FAFB] rounded-xl border border-gray-200 shadow-[0_2px_9px_rgba(0,0,0,0.08)] px-[60px] py-4 w-[calc(100%-8px)]">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         {/* Historical Prediction Accuracy */}
         <div className="flex items-center gap-3">
