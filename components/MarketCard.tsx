@@ -139,7 +139,7 @@ export default function MarketCard({ card }: MarketCardProps) {
       <div className="flex flex-col flex-1 min-h-0">
         <div className="grid grid-cols-[1fr_50px_50px] text-xs text-[#6B7280] font-medium pb-1 mb-1 w-[288px] flex-shrink-0">
           <div className="text-xs text-[#6B7280] font-normal px-2" />
-          <div className="text-center px-2">Mkt</div>
+          <div className="text-center px-2">Market</div>
           <div className="text-center px-2">AI</div>
         </div>
         {/* 市场数据区域：固定高度约 2 行，内容可上下滚动；外层圆角裁剪保证底角始终圆角（与行内圆角一致） */}
